@@ -15,13 +15,13 @@ from sklearn import metrics
 from cnn_model import TCNNConfig, TextCNN
 from data.cnews_loader import read_vocab, read_category, batch_iter, process_file, build_vocab
 
-base_dir = 'data/cnews'
-train_dir = os.path.join(base_dir, 'cnews.train.txt')
-test_dir = os.path.join(base_dir, 'cnews.test.txt')
-val_dir = os.path.join(base_dir, 'cnews.val.txt')
-vocab_dir = os.path.join(base_dir, 'cnews.vocab.txt')
+base_dir = 'data/qas'
+# train_dir = os.path.join(base_dir, 'cnews.train.txt')
+# test_dir = os.path.join(base_dir, 'cnews.test.txt')
+# val_dir = os.path.join(base_dir, 'cnews.val.txt')
+vocab_dir = os.path.join(base_dir, 'vocab.txt')
 
-save_dir = 'checkpoints/textcnn'
+save_dir = base_dir
 save_path = os.path.join(save_dir, 'best_validation')  # 最佳验证结果保存路径
 
 
@@ -57,7 +57,7 @@ def evaluate(sess, x_, y_):
     return total_loss / data_len, total_acc / data_len
 
 
-def train():
+def train(x_train, y_train):
     print("Configuring TensorBoard and Saver...")
     # 配置 Tensorboard，重新训练时，请将tensorboard文件夹删除，不然图会覆盖
     tensorboard_dir = 'tensorboard/textcnn'
@@ -77,8 +77,10 @@ def train():
     print("Loading training and validation data...")
     # 载入训练集与验证集
     start_time = time.time()
-    x_train, y_train = process_file(train_dir, word_to_id, cat_to_id, config.seq_length)
-    x_val, y_val = process_file(val_dir, word_to_id, cat_to_id, config.seq_length)
+    x_train, y_train = process_file(x_train, y_train, word_to_id, cat_to_id, config.seq_length)
+    # x_val, y_val = process_file(val_dir, word_to_id, cat_to_id, config.seq_length)
+    x_val, y_val = x_train[-1000:], y_train[-1000:]
+    x_train, y_train = x_train[:-1000], y_train[:-1000]
     time_dif = get_time_dif(start_time)
     print("Time usage:", time_dif)
 
@@ -138,10 +140,10 @@ def train():
             break
 
 
-def test():
+def test(x_test, y_test):
     print("Loading test data...")
     start_time = time.time()
-    x_test, y_test = process_file(test_dir, word_to_id, cat_to_id, config.seq_length)
+    x_test, y_test = process_file(x_test, y_test, word_to_id, cat_to_id, config.seq_length)
 
     session = tf.Session()
     session.run(tf.global_variables_initializer())
@@ -181,20 +183,31 @@ def test():
     print("Time usage:", time_dif)
 
 
+def loaddata():
+    from sklearn.datasets import load_files
+    from sklearn.model_selection import train_test_split
+    dir = 'C:\\Users\\chenshuai\\Desktop\\py\\dataset\\individual\\'
+    paper = load_files(dir, encoding='UTF-8')
+    x_train, x_test, y_train, y_test = train_test_split(paper.data, paper.target, test_size=0.2)
+    return x_train, y_train, x_test, y_test
+
 if __name__ == '__main__':
-    if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
-        raise ValueError("""usage: python run_cnn.py [train / test]""")
+    # if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
+    #     raise ValueError("""usage: python run_cnn.py [train / test]""")
 
     print('Configuring CNN model...')
     config = TCNNConfig()
+    print('Loading raw data...')
+    x_train, y_train, x_test, y_test = loaddata()
     if not os.path.exists(vocab_dir):  # 如果不存在词汇表，重建
-        build_vocab(train_dir, vocab_dir, config.vocab_size)
+        print('Building vocab...')
+        build_vocab(x_train, vocab_dir, config.vocab_size)
     categories, cat_to_id = read_category()
     words, word_to_id = read_vocab(vocab_dir)
     config.vocab_size = len(words)
     model = TextCNN(config)
 
-    if sys.argv[1] == 'train':
-        train()
-    else:
-        test()
+    # if sys.argv[1] == 'train':
+    train(x_train, y_train)
+    # else:
+    test(x_test, y_test)

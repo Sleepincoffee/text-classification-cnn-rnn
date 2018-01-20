@@ -9,7 +9,7 @@ import tensorflow.contrib.keras as kr
 if sys.version_info[0] > 2:
     is_py3 = True
 else:
-    reload(sys)
+    # reload(sys)
     sys.setdefaultencoding("utf-8")
     is_py3 = False
 
@@ -55,9 +55,9 @@ def read_file(filename):
     return contents, labels
 
 
-def build_vocab(train_dir, vocab_dir, vocab_size=5000):
+def build_vocab(x_train, vocab_dir, vocab_size=5000):
     """根据训练集构建词汇表，存储"""
-    data_train, _ = read_file(train_dir)
+    data_train = x_train
 
     all_data = []
     for content in data_train:
@@ -83,7 +83,7 @@ def read_vocab(vocab_dir):
 
 def read_category():
     """读取分类目录，固定"""
-    categories = ['体育', '财经', '房产', '家居', '教育', '科技', '时尚', '时政', '游戏', '娱乐']
+    categories = ['1-硬件问题', '2-操作系统', '3-驱动问题', '4-网络相关', '5-随机软件', '6-非随机软件', '7-服务承诺', '8-非技术类']
 
     categories = [native_content(x) for x in categories]
 
@@ -97,14 +97,15 @@ def to_words(content, words):
     return ''.join(words[x] for x in content)
 
 
-def process_file(filename, word_to_id, cat_to_id, max_length=600):
+def process_file(x, y, word_to_id, cat_to_id, max_length=600):
     """将文件转换为id表示"""
-    contents, labels = read_file(filename)
+    contents, labels = x, y
 
     data_id, label_id = [], []
     for i in range(len(contents)):
         data_id.append([word_to_id[x] for x in contents[i] if x in word_to_id])
-        label_id.append(cat_to_id[labels[i]])
+        # label_id.append(cat_to_id[labels[i]])
+        label_id.append(labels[i]) #loadfile 之后label就是0-1
 
     # 使用keras提供的pad_sequences来将文本pad为固定长度
     x_pad = kr.preprocessing.sequence.pad_sequences(data_id, max_length)
@@ -119,8 +120,8 @@ def batch_iter(x, y, batch_size=64):
     num_batch = int((data_len - 1) / batch_size) + 1
 
     indices = np.random.permutation(np.arange(data_len))
-    x_shuffle = x[indices]
-    y_shuffle = y[indices]
+    x_shuffle = x #[indices]
+    y_shuffle = y #[indices]
 
     for i in range(num_batch):
         start_id = i * batch_size

@@ -5,10 +5,13 @@ import tensorflow as tf
 
 class TCNNConfig(object):
     """CNN配置参数"""
+    # Test
+    # Loss: 0.62, Test
+    # Acc: 79.42 %
 
     embedding_dim = 64  # 词向量维度
     seq_length = 600  # 序列长度
-    num_classes = 10  # 类别数
+    num_classes = 8  # 类别数
     num_filters = 256  # 卷积核数目
     kernel_size = 5  # 卷积核尺寸
     vocab_size = 5000  # 词汇表达小
@@ -16,7 +19,7 @@ class TCNNConfig(object):
     hidden_dim = 128  # 全连接层神经元
 
     dropout_keep_prob = 0.5  # dropout保留比例
-    learning_rate = 1e-3  # 学习率
+    learning_rate = 5e-4  # 学习率
 
     batch_size = 64  # 每批训练大小
     num_epochs = 10  # 总迭代轮次
